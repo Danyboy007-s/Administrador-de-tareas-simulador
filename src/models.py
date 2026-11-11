@@ -12,3 +12,4 @@ class Tarea:
     @classmethod
     def from_dict(cls, datos):
         return cls(datos["id"], datos["titulo"], datos["completada"])
+    
