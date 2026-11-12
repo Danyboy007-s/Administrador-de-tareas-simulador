@@ -64,6 +64,7 @@ class Aplicacion:
             self.raiz, self.procesos,
             al_cerrar=lambda: setattr(self, "ventana_procesos", None),
             al_fallo_critico=self.fallo_critico,
+            al_buscar_archivo=self.buscar_archivo,
         )
 
     def fallo_critico(self, proceso: dict) -> None:
@@ -89,6 +90,14 @@ class Aplicacion:
             al_cerrar=lambda: setattr(self, "ventana_archivos", None),
             al_ejecutar=self.ejecutar_archivo,
         )
+
+    def buscar_archivo(self, ruta: str) -> None:
+        # Desde el Administrador de procesos: abre el Sistema de archivos
+        # en la carpeta del archivo con el que se creó el proceso.
+        self.abrir_archivos()
+        if self.ventana_archivos is not None and self.ventana_archivos.existe():
+            self.ventana_archivos.traer_al_frente()
+            self.ventana_archivos.mostrar_archivo(ruta)
 
     def ejecutar_archivo(self, ruta: str) -> str:
         # Une los dos módulos: procesos/ y archivos/ no se conocen entre sí,

@@ -65,12 +65,16 @@ class VentanaProcesos:
         controlador: Any,
         al_cerrar: Callable[[], None] | None = None,
         al_fallo_critico: Callable[[dict[str, Any]], None] | None = None,
+        al_buscar_archivo: Callable[[str], None] | None = None,
     ) -> None:
         self.controlador = controlador
         self.al_cerrar = al_cerrar
         # Función que da app.py para "apagar" el sistema si se detiene un
         # proceso crítico. Recibe el BCP del proceso detenido.
         self.al_fallo_critico = al_fallo_critico
+        # Función que da app.py para mostrar un archivo en el Sistema de
+        # archivos. Recibe la ruta del archivo.
+        self.al_buscar_archivo = al_buscar_archivo
         self.ventana = tk.Toplevel(master)
         self.ventana.title("Administrador de procesos")
         self.ventana.geometry("1100x680")
@@ -109,6 +113,11 @@ class VentanaProcesos:
             self.tabla.column(columna, width=anchos[columna], anchor="center" if columna not in ("nombre", "estado") else "w")
         self.tabla.pack(fill="both", expand=True)
         self.tabla.bind("<<TreeviewSelect>>", self._mostrar_detalle)
+        # Menú de clic derecho (Button-3 en Linux/Windows, Button-2 en macOS).
+        self.menu = tk.Menu(self.ventana, tearoff=False)
+        self.tabla.bind("<Button-3>", self._menu_contextual)
+        if self.ventana.tk.call("tk", "windowingsystem") == "aqua":
+            self.tabla.bind("<Button-2>", self._menu_contextual)
         for consumo, (fondo, letra) in self.COLORES.items():
             self.tabla.tag_configure(consumo, background=fondo, foreground=letra)
 
@@ -188,6 +197,58 @@ class VentanaProcesos:
         self.detalle.delete("1.0", "end")
         self.detalle.insert("1.0", contenido)
         self.detalle.configure(state="disabled")
+
+    # ------------------------------------------------------------------
+    # Menú de clic derecho
+    # ------------------------------------------------------------------
+
+    def _menu_contextual(self, evento: Any) -> None:
+        fila = self.tabla.identify_row(evento.y)
+        if not fila:
+            return
+        self.tabla.selection_set(fila)
+        self.tabla.focus(fila)
+        proceso = next((p for p in self._procesos() if str(p["pid"]) == fila), None)
+        if proceso is None:
+            return
+        archivos = list(proceso.get("archivos_abiertos") or [])
+        ruta = archivos[0] if archivos else None
+        estado_ruta = "normal" if ruta else "disabled"
+
+        self.menu.delete(0, "end")
+        self.menu.add_command(
+            label="Abrir ubicación del archivo",
+            state=estado_ruta if self.al_buscar_archivo else "disabled",
+            command=lambda: self._buscar_archivo(ruta),
+        )
+        self.menu.add_command(label="Copiar ruta", state=estado_ruta, command=lambda: self._copiar_ruta(ruta))
+        if not ruta:
+            self.menu.add_separator()
+            aviso = (
+                "(El proceso terminó y ya liberó sus archivos)"
+                if proceso["estado"] == "Terminado"
+                else "(Este proceso no se abrió desde un archivo)"
+            )
+            self.menu.add_command(label=aviso, state="disabled")
+        try:
+            self.menu.tk_popup(evento.x_root, evento.y_root)
+        finally:
+            self.menu.grab_release()
+
+    def _buscar_archivo(self, ruta: str | None) -> None:
+        if not ruta or self.al_buscar_archivo is None:
+            return
+        try:
+            self.al_buscar_archivo(ruta)
+        except Exception as error:
+            messagebox.showerror("No se pudo abrir la ubicación", str(error), parent=self.ventana)
+
+    def _copiar_ruta(self, ruta: str | None) -> None:
+        if not ruta:
+            return
+        self.ventana.clipboard_clear()
+        self.ventana.clipboard_append(ruta)
+        self.estado.set(f"Ruta copiada: {ruta}")
 
     def crear(self) -> None:
         nombre = simpledialog.askstring("Crear proceso", "Nombre del proceso:", parent=self.ventana)

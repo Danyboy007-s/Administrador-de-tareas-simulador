@@ -288,6 +288,20 @@ class VentanaArchivos:
             self.arbol.see(ruta)
         self.estado.set(f"{len(elementos)} elemento(s). Doble clic en una carpeta para entrar.")
 
+    def mostrar_archivo(self, ruta: str) -> None:
+        # Abre la carpeta que contiene el archivo y lo deja seleccionado.
+        carpeta = posixpath.dirname(ruta) or "/"
+        self.ir_a(carpeta)
+        if self.ruta != carpeta:
+            return  # ir_a ya mostró el error (por ejemplo, falta un permiso)
+        if self.tabla.exists(ruta):
+            self.tabla.selection_set(ruta)
+            self.tabla.focus(ruta)
+            self.tabla.see(ruta)
+            self.estado.set(f"Archivo encontrado: {ruta}")
+        else:
+            self.estado.set(f"El archivo {ruta} ya no existe en esta carpeta.")
+
     def _al_elegir_en_arbol(self, _evento: Any = None) -> None:
         seleccion = self.arbol.selection()
         if seleccion and seleccion[0] != self.ruta:
