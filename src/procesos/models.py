@@ -34,9 +34,10 @@ class Proceso:
         contador_programa=0,    # dirección de la siguiente instrucción a ejecutar
         registros=None,         # valores de los registros del CPU (diccionario)
         tiempo_cpu=0,           # pulsos que ya lleva usando el CPU
-        tiempo_restante=10,     # pulsos que le faltan para terminar
+        tiempo_restante=10,     # pulsos que le faltan; None = nunca termina solo
         archivos_abiertos=None, # lista de nombres de archivos que usa
         dispositivos=None,      # lista de dispositivos de E/S asignados
+        critico=False,          # True = proceso del sistema; detenerlo apaga el equipo
     ):
         # Identificación del proceso
         self.pid = pid
@@ -47,6 +48,8 @@ class Proceso:
         # Estado y planificación
         self.estado = estado
         self.prioridad = prioridad
+        # Un proceso crítico (como systemd) mantiene vivo al sistema.
+        self.critico = critico
 
         # Contexto del CPU: lo que se guarda para poder pausar y reanudar
         self.contador_programa = contador_programa
@@ -95,6 +98,7 @@ class Proceso:
             "memoria_mb": self.memoria_mb,
             "archivos_abiertos": self.archivos_abiertos,
             "dispositivos": self.dispositivos,
+            "critico": self.critico,
         }
 
     @classmethod

@@ -1,5 +1,4 @@
 # Módulo del Administrador de tareas (simulado).
-# Esta carpeta va a tener:
-#   models.py      -> clase Proceso con los datos del BCP
-#   controllers.py -> estados del proceso, pulsos y acciones (ejecutar, pausar, detener)
-#   views.py       -> ventanas del administrador (tabla de procesos y detalle del BCP)
+#   models.py      -> clase Proceso con los datos del BCP y los 5 estados
+#   controllers.py -> transiciones de estado, planificador, pulsos y acciones
+#   views.py       -> ventana del administrador (tabla de procesos y detalle del BCP)

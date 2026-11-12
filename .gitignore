@@ -1,1 +1,6 @@
 __pycache__/
+
+# Datos que el programa guarda al usarse; cada quien tiene los suyos.
+# Si no existen, el programa crea los de ejemplo al arrancar.
+data/*.json
+data/*.danado
